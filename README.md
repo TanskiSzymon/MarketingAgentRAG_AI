@@ -16,7 +16,11 @@ This project is a complete n8n workflow designed for automating LoRA model train
 
 ## 🎬 Demo Video
 
-
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=lyQkkeuPuW0">
+     <img src="https://img.youtube.com/vi/lyQkkeuPuW0/0.jpg" alt="Watch the video.">
+  </a>
+</p>
 
 ---
 
