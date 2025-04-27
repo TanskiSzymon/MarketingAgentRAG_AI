@@ -1,0 +1,2766 @@
+{
+  "name": "Marketing V2 public",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "includeSpamTrash": false,
+          "labelIds": [
+            "INBOX",
+            "CATEGORY_PERSONAL",
+            "IMPORTANT"
+          ],
+          "readStatus": "unread",
+          "sender": ""
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1740,
+        -20
+      ],
+      "id": "<YOUR_CREDENTIAL_ID>",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "compress",
+        "binaryPropertyName": "={{ $json.input_fields }}",
+        "fileName": "data.zip"
+      },
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1.1,
+      "position": [
+        580,
+        -680
+      ],
+      "id": "fc6cd9c8-ee2a-4686-be2d-7fb07fe96d58",
+      "name": "Compression"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/ostris/flux-dev-lora-trainer/versions/c6e78d2501e8088876e99ef21e4460d0dc121af7a4b786b9a4c2d75c620e300d/trainings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <YOUR_REPLICATE_API_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "wait=60"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"destination\": \"<YOUR_REPLICATE_USERNAME>/<YOUR_LORA_NAME>\",\n  \"input\": {\n    \"input_images\": \"{{ $('Google Drive').item.json.webContentLink }}\",\n    \"steps\": 1000,\n    \"lora_rank\": 16,\n    \"optimizer\": \"adamw8bit\",\n    \"batch_size\": 1,\n    \"resolution\": \"512,768,1024\",\n    \"autocaption\": true,\n    \"trigger_word\": \"{{ $('Gmail1').item.json.subject }}\",\n    \"learning_rate\": 0.0004,\n    \"wandb_project\": \"flux_train_replicate\",\n    \"wandb_save_interval\": 100,\n    \"caption_dropout_rate\": 0.05,\n    \"cache_latents_to_disk\": false,\n    \"wandb_sample_interval\": 100,\n    \"gradient_checkpointing\": false\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        -680
+      ],
+      "id": "c4aeb30f-dc66-4174-9cbb-83969e0a52c9",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "name": "data.zip",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Google Sheets2').item.json.folder_path }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        740,
+        -680
+      ],
+      "id": "4cbc44be-040e-484d-9bb0-c8cf5b57564b",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.replicate.com/v1/trainings/{{ $json.training_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <YOUR_REPLICATE_API_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "wait=60"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1880,
+        -680
+      ],
+      "id": "a67d0241-e315-4309-9aaa-58000fd63b6a",
+      "name": "HTTP Request6"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1600,
+        -20
+      ],
+      "id": "5d08eb1a-193f-4a97-8631-fe8b1c688681",
+      "name": "Gmail",
+      "webhookId": "<YOUR_CREDENTIAL_ID>",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1460,
+        -20
+      ],
+      "id": "8b0e1418-b87a-4eda-a727-854c3c9e4dfa",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2527b8ed-4b79-4485-a02a-9376351a4a2d",
+              "leftValue": "={{ $('Gmail Trigger').item.json.Subject }}",
+              "rightValue": "={{ $('Google Sheets').item.json.order_number }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1140,
+        -20
+      ],
+      "id": "48a1b2fe-09ca-401f-9a8d-a9c5fbf49e8c",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "=order_number",
+              "lookupValue": "={{ $('Gmail Trigger').item.json.Subject }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -940,
+        -120
+      ],
+      "id": "a7c99cb7-dff5-4343-8125-6ea2af0a44cc",
+      "name": "Google Sheets1",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2527b8ed-4b79-4485-a02a-9376351a4a2d",
+              "leftValue": "={{ $('Google Sheets1').item.json.payment_status }}",
+              "rightValue": "=paid",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -700,
+        -120
+      ],
+      "id": "33c0b098-9426-4abb-b694-d59134286578",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Google Sheets1').item.json.model_trained }}",
+                    "rightValue": "FALSE",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    },
+                    "id": "b7f7d575-f875-4e6a-b857-31928e15d743"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NOT trained"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "41b831d4-b5ba-4193-ba3a-044bf6efd8ff",
+                    "leftValue": "={{ $('Google Sheets1').item.json.model_trained }}",
+                    "rightValue": "TRUE",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Trained"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -440,
+        -200
+      ],
+      "id": "93427c5d-eb5b-425e-b884-e9fbbc4afc99",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $('Gmail').item.json.id }}",
+        "simple": false,
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        -680
+      ],
+      "id": "e1c2049f-90b0-4cf6-9a46-7d9af55fa06f",
+      "name": "Gmail1",
+      "webhookId": "<YOUR_CREDENTIAL_ID>",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "704a85ab-801a-4f36-9fa6-3d3bcd65f72a",
+              "leftValue": "={{ $json.generated_images }}",
+              "rightValue": "={{ $json.max_images }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        100,
+        -120
+      ],
+      "id": "a3dd4e55-ce9c-4bbc-8fb5-bf45452f9a93",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <YOUR_REPLICATE_API_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "wait=60"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"version\": \"{{ $('Google Sheets7').first().json.model_version }}\",\n  \"input\": {\n    \"prompt\": \"{{ $('AI Agent1').item.json.output }}\",\n    \"aspect_ratio\": \"1:1\",  \n    \"width\": 1024, \n    \"height\": 1024, \n    \"num_outputs\": 1, \n    \"num_inference_steps\": 28, \n    \"go_fast\": true,\t\n    \"model\": \"dev\", \n    \"guidance_scale\": 3,  \n    \"output_format\": \"png\", \n    \"output_quality\": 95,\n    \"disable_safety_checker\": false\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3160,
+        -260
+      ],
+      "id": "7d633cea-f112-4d17-82e9-fde715a68566",
+      "name": "HTTP Request8",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.output[0] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <YOUR_REPLICATE_API_KEY>"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "wait=60"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3320,
+        -260
+      ],
+      "id": "e92ac34a-da1e-47a3-b863-847aba7dcf09",
+      "name": "HTTP Request9"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a highly creative and visually striking prompt for the product based on the general style guidelines provided and the detailed product context ant content retrieved from the database.",
+        "options": {
+          "systemMessage": "=TOOLS  \n------  \nAssistant can ask the user to use tools to look up information that may be helpful in answering the user's original question. The tools the human can use are:  \n\n{tools}  \n\n{format_instructions}  \n\nYou are an AI agent tasked with generating highly creative, detailed, and visually striking prompts in Polish for creating hyper-realistic product images using Flux Dev.\nYour goal is to make each image different and unique, creating a strong \"WOW\" effect every time.\nYou must search vector dataset for content of product.\nYou cant ask vector dataset for test, you must give ask for content\nYou have access to the memory of previously generated prompts for the current order.\nYou must not repeat styles, scenes, backgrounds, lighting, or poses used in earlier prompts for the same order.\nYour task is to deliver a new, fresh idea each time.\n\nYour response must always be in English, containing only the full prompt text, without any special characters, punctuation marks, or explanations.\n\nRequirements:\nLanguage: Prompts must be entirely in English.\n\nFormat: Every prompt must begin with the word \"{{ $json.order_number }}\".\n\nCreativity and Impact: Focus on ultra-creative and unique scenes. Each image must immediately stand out and feel fresh.\n\nRealism and Detail: Prompts should still describe hyper-realistic visuals, including precise descriptions of the product's appearance, color, material, and form, exactly as specified in the product description.\n\nVisual Specifications:\nStyle: Define the photographic style clearly (e.g., modern, retro, minimalist, futuristic, luxurious, artistic, surreal).\n\nLighting: Specify creative lighting details (e.g., golden hour backlight, neon reflections, dramatic spotlight, dreamy ambient lighting).\n\nColor Tones: Choose bold color tones (e.g., vibrant, deep, pastel, cinematic, saturated).\n\nTechnical Details: Include photography-specific details such as focal length (e.g., 50mm, 85mm), ISO (e.g., ISO 100 for clarity), grain level (e.g., no grain, fine grain), and special visual effects (e.g., bokeh, motion blur, mist effects, dreamlike background).\n\nProportions: All images must maintain Instagram-friendly 4:3 proportions.\n\nBackground: Always choose a different background than in previous prompts (e.g., gradient, textured, marble, sparkling water, cityscape, velvet).\n\nDynamic Presentation: Incorporate new dynamic elements, such as different splashes, movements, angles, or background stories for each generated image.\n\nGuidelines:\nUse highly descriptive adjectives to enhance visual appeal and realism (e.g., radiant, shimmering, opulent, vibrant, ethereal, sleek).\n\nPrecisely match the provided product description, including specific materials, colors, and unique features.\n\nEnsure every image captures a slightly different mood, energy, or dynamic concept than previous ones.\n\nExample Prompts (now with diversity between them):\nExample 1: Sports Shoes\n{{ $json.order_number }} photorealistic single black sports shoe made from breathable mesh and synthetic leather with neon-yellow accents captured in a dynamic running pose on a minimalistic grey background with subtle smoke effects modern photographic style ultra-detailed high-resolution sharp glossy soft studio lighting with subtle contrast focal length 50mm ISO 100 fine grain vivid and saturated colors proportions 4:3\n\nExample 2: Perfume Bottle\n{{ $json.order_number }} photorealistic luxurious perfume in an elegant transparent blue glass bottle with shiny silver atomizer dynamically splashing into crystal-clear water with vibrant reflections elegant and premium photographic style ultra-detailed high-resolution crystal-sharp glossy dramatic studio lighting with cool tones focal length 85mm ISO 100 no grain cool vibrant colors proportions 4:3\n\nExample 3: Wireless Earbuds\n{{ $json.order_number }} photorealistic matte black wireless earbuds with subtle chrome details dynamically floating above a futuristic neon-lit background with vibrant blue and purple gradients and subtle motion trails modern and futuristic photographic style ultra-detailed high-resolution sharp with glossy reflections dramatic spotlight lighting focal length 50mm ISO 100 no grain vivid metallic colors proportions 4:3"
+        }
+      },
+      "id": "b73a45c1-b540-4bd8-8f84-f2fae5ea5540",
+      "name": "AI Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        2780,
+        -260
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $('Gmail Trigger').first().json.id }}",
+        "simple": false,
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        680,
+        -140
+      ],
+      "id": "<YOUR_CREDENTIAL_ID>",
+      "name": "Gmail2",
+      "webhookId": "<YOUR_CREDENTIAL_ID>",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $('If2').item.json.order_number }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "<YOUR_FOLDER_ID>",
+          "mode": "list",
+          "cachedResultName": "Marketing_Agnet",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/<YOUR_FILE_ID>"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -140,
+        -680
+      ],
+      "id": "d837f115-f93f-487b-9dbb-9bf227f4496a",
+      "name": "Google Drive2",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "order_number": "={{ $('Google Sheets1').item.json.order_number }}",
+            "folder_path": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "order_number"
+          ],
+          "schema": [
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "payment_status",
+              "displayName": "payment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_trained",
+              "displayName": "model_trained",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_version",
+              "displayName": "model_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "generated_images",
+              "displayName": "generated_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "max_images",
+              "displayName": "max_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "folder_path",
+              "displayName": "folder_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "pdf_path",
+              "displayName": "pdf_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        40,
+        -680
+      ],
+      "id": "ee33bf29-38f9-46fe-8b79-ed9dca841dae",
+      "name": "Google Sheets2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        900,
+        -680
+      ],
+      "id": "8f24dced-1f38-4d1f-9f4c-a663d53de90d",
+      "name": "Google Drive3",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n\nconst binary = {};\n\nlet attachmentFields = [];\nlet counter = 0;\n\n\nfor (const item of items) {\n  const binaries = item.binary;\n  \n  for (const key in binaries) {\n    const binaryData = binaries[key];\n    const mimeType = binaryData.mimeType || '';\n\n    if (mimeType.startsWith('image/')) {\n      const fieldName = `file_${counter}`;\n      binary[fieldName] = binaryData;\n      attachmentFields.push(fieldName);\n      counter++;\n    }\n  }\n}\n\nconst inputFieldsString = attachmentFields.join(',');\n\n\nreturn [\n  {\n    json: {\n      input_fields: inputFieldsString,\n      number_of_images: counter\n    },\n    binary\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        -680
+      ],
+      "id": "2bb4ddca-5680-40c0-a499-5e489e6998c2",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2220,
+        -660
+      ],
+      "id": "bdccfb90-d22e-43c7-b168-80c4897c7321",
+      "name": "Wait",
+      "webhookId": "<YOUR_CREDENTIAL_ID>"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0c44b82a-4467-4117-920f-2e25e9dc8280",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2060,
+        -680
+      ],
+      "id": "94037a69-d095-425b-938a-d759d4cc5891",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "order_number": "={{ $('Google Sheets5').item.json.order_number }}",
+            "model_trained": "TRUE",
+            "model_version": "={{ $json.version_id }}"
+          },
+          "matchingColumns": [
+            "order_number"
+          ],
+          "schema": [
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "payment_status",
+              "displayName": "payment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_trained",
+              "displayName": "model_trained",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "model_version",
+              "displayName": "model_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "generated_images",
+              "displayName": "generated_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "max_images",
+              "displayName": "max_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "folder_path",
+              "displayName": "folder_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "pdf_path",
+              "displayName": "pdf_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2400,
+        -880
+      ],
+      "id": "8371f371-72d5-4414-ad16-f94b0e0bf5ce",
+      "name": "Google Sheets4",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "order_number": "={{ $json.id }}\n",
+            "training_id": "{{ $('HTTP Request3').item.json.id }}"
+          },
+          "matchingColumns": [
+            "order_number"
+          ],
+          "schema": [
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "payment_status",
+              "displayName": "payment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_trained",
+              "displayName": "model_trained",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_version",
+              "displayName": "model_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "generated_images",
+              "displayName": "generated_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "max_images",
+              "displayName": "max_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "folder_path",
+              "displayName": "folder_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "pdf_path",
+              "displayName": "pdf_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "training_id",
+              "displayName": "training_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1380,
+        -680
+      ],
+      "id": "c16b150a-bb48-45b4-b1d6-8d2497cbcbbe",
+      "name": "Google Sheets3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "order_number",
+              "lookupValue": "={{ $('If2').item.json.order_number }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1700,
+        -680
+      ],
+      "id": "1ac49fe7-0673-4ec9-b358-2a609c04974c",
+      "name": "Google Sheets5",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst results = items.map(item => {\n  const versionString = $input.first().json.output.version || '';\n  \n\n  const parts = versionString.split(':');\n  \n  const versionId = parts.length > 1 ? parts[1] : '';\n\n  return {\n    json: {\n      version_id: versionId\n    }\n  };\n});\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        -880
+      ],
+      "id": "5a67ec58-4752-4721-8a72-c61c302cfa7d",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "order_number",
+              "lookupValue": "={{ $json.order_number }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2580,
+        -880
+      ],
+      "id": "c405f8f2-f52d-4bad-bf87-d22c9eaca52c",
+      "name": "Google Sheets6",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "=order_number",
+              "lookupValue": "={{ $('Gmail Trigger').first().json.Subject }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        320,
+        -240
+      ],
+      "id": "9c6b1b38-116e-40c2-b140-03e253288703",
+      "name": "Google Sheets7",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nlet pdfFile = null;\n\n\nfor (const item of items) {\n  const binaries = item.binary;\n  \n  for (const key in binaries) {\n    const binaryData = binaries[key];\n    const mimeType = binaryData.mimeType || '';\n\n    if (mimeType === 'application/pdf') {\n      pdfFile = binaryData;\n      break;     }\n  }\n  \n  if (pdfFile) {\n    break; \n  }\n}\n\nif (pdfFile) {\n  return [\n    {\n      json: {\n        filename: pdfFile.fileName || 'product_description.pdf'\n      },\n      binary: {\n        data: pdfFile\n      }\n    }\n  ];\n} else {\n  throw new Error('No PDF file found among attachments.');\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        -140
+      ],
+      "id": "d1ec04f2-9698-4c1d-b7cb-4f6ac42d23d2",
+      "name": "Code5"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "105add2f-efa2-4978-ab8e-93551514fe28",
+      "name": "OpenAI Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2720,
+        -60
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "generated_images": "={{ $json.updated_generated_images }}",
+            "order_number": "={{ $('Google Sheets7').first().json.order_number }}"
+          },
+          "matchingColumns": [
+            "order_number"
+          ],
+          "schema": [
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "payment_status",
+              "displayName": "payment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_trained",
+              "displayName": "model_trained",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_version",
+              "displayName": "model_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "generated_images",
+              "displayName": "generated_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "max_images",
+              "displayName": "max_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "folder_path",
+              "displayName": "folder_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "data_vectorized",
+              "displayName": "data_vectorized",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "data_vectorized_ID",
+              "displayName": "data_vectorized_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "training_id",
+              "displayName": "training_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3800,
+        100
+      ],
+      "id": "f122e114-9735-43be-a9ea-d29ba27b1f04",
+      "name": "Google Sheets10",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst currentValue = $('Google Sheets8').first().json.generated_images;\n\n\nconst number = Number(currentValue) || 0;\n\n\nconst incrementedValue = number + 1;\n\n\nreturn [\n  {\n    json: {\n      updated_generated_images: incrementedValue\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3800,
+        -260
+      ],
+      "id": "53f1ea27-343b-499f-8cd1-0d561f5771a1",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        -140
+      ],
+      "id": "756583c8-6e89-4b7e-b15d-bc50c93fc533",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3fd14717-7f0b-4b86-8f90-37de961bd466",
+              "leftValue": "={{ $('Google Sheets7').item.json.data_vectorized }}",
+              "rightValue": "2",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        500,
+        -240
+      ],
+      "id": "e850ed92-0122-45d3-8f3c-455efd6aed04",
+      "name": "If5"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      document: $('Extract from File').first().json.text,\n      metadata: {\n        order_number: $('Gmail2').first().json.subject|| \"unknown\",\n        type: \"product_description\"\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        -140
+      ],
+      "id": "abb4fd8d-5e3c-4590-854a-8a4344b8f97f",
+      "name": "Code6"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "=order-{{ $json.metadata.order_number }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        -140
+      ],
+      "id": "fafb43c8-c349-4559-a6d6-7da6e6604b36",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "Vector_database",
+        "toolDescription": "This is vector database. Use this tool to finde informattion abput pproduct and content.",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "=order-{{ $('If5').item.json.order_number }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.1,
+      "position": [
+        2960,
+        -60
+      ],
+      "id": "1498f206-a825-4cac-973d-1f62225b8fbf",
+      "name": "Qdrant Vector Store2",
+      "credentials": {
+        "qdrantApi": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1920,
+        80
+      ],
+      "id": "723a1b14-bc13-407c-ba2f-c8f44790d09e",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Code6').item.json.document }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "order",
+                "value": "={{ $('Code6').item.json.metadata.order_number }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        40
+      ],
+      "id": "7522f6e5-7eb4-4b31-8e8a-1aab550595d2",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2960,
+        100
+      ],
+      "id": "38f3cce9-491e-4d0f-924b-9fe43a355195",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        2060,
+        160
+      ],
+      "id": "<YOUR_CREDENTIAL_ID>",
+      "name": "Token Splitter"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "order_number": "={{ $('Google Sheets7').first().json.order_number }}",
+            "data_vectorized": "TRUE"
+          },
+          "matchingColumns": [
+            "order_number"
+          ],
+          "schema": [
+            {
+              "id": "order_number",
+              "displayName": "order_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "payment_status",
+              "displayName": "payment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_trained",
+              "displayName": "model_trained",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "model_version",
+              "displayName": "model_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "generated_images",
+              "displayName": "generated_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "max_images",
+              "displayName": "max_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "folder_path",
+              "displayName": "folder_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "data_vectorized",
+              "displayName": "data_vectorized",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_vectorized_ID",
+              "displayName": "data_vectorized_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "training_id",
+              "displayName": "training_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2320,
+        -140
+      ],
+      "id": "b7b7b5f1-d38d-4684-ae95-ea9ece7f7708",
+      "name": "Google Sheets12",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $('Google Sheets7').first().json.order_number }}",
+        "contextWindowLength": 7
+      },
+      "id": "d5320bbc-16b3-4858-b68e-255fa85eba3c",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        2860,
+        -60
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=<YOUR_QDRANT_CLASTER_Endpoint>/collections/order-{{ $('Google Sheets7').first().json.order_number }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "<YOUR_QDRANT_API_KEY>"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"vectors\": {\n    \"size\": 1536,\n    \"distance\": \"Cosine\" \n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1420,
+        -140
+      ],
+      "id": "655e6620-c881-40fd-94ef-7bb5146f1247",
+      "name": "HTTP Request10"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1600,
+        -140
+      ],
+      "id": "effb887d-5737-4465-b569-99c2a23fd131",
+      "name": "Wait1",
+      "webhookId": "<YOUR_CREDENTIAL_ID>"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "<YOUR_CREDENTIAL_ID>",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/<YOUR_SPREADSHEET_ID>/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "=order_number",
+              "lookupValue": "={{ $('If2').first().json.order_number }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -60,
+        -120
+      ],
+      "id": "0b128eab-10a6-4a8e-86c6-f5597f1eba5a",
+      "name": "Google Sheets8",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3950708-d08a-461e-ac34-51695ee06296",
+              "name": "order_from_mail",
+              "value": "={{ $('Gmail Trigger').item.json.Subject }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1320,
+        -20
+      ],
+      "id": "c2dbebf2-1989-4a59-88d5-c866dd7347e6",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').first().json.id }}",
+        "message": "Generated image",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3480,
+        -260
+      ],
+      "id": "d080106c-4347-42f6-9fca-c00bbd0d62cc",
+      "name": "Gmail3",
+      "webhookId": "<YOUR_CREDENTIAL_ID>",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').first().json.id }}",
+        "message": "Credits exhausted",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -480,
+        60
+      ],
+      "id": "0e01113e-5613-4e29-9c7c-41be2a57fcfa",
+      "name": "Gmail4",
+      "webhookId": "<YOUR_CREDENTIAL_ID>",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').first().json.id }}",
+        "message": "Wrong order number",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -940,
+        140
+      ],
+      "id": "096fea6b-ea2d-4199-9f81-8e48eda82ec2",
+      "name": "Gmail5",
+      "webhookId": "<YOUR_CREDENTIAL_ID>",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<YOUR_CREDENTIAL_ID>",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Workflow Setup Instructions\nBefore you start the workflow, make sure you have:\n\n✅ Replicate API Key\n✅ OpenAI API Key\n✅ Qdrant API Key\n✅ Google Credentials (Google Cloud Project for OAuth)\n\nStep-by-Step Setup\n1. Create the model on Replicate\nGo to Replicate ➔ Manually create one base model (for example, a LoRA base).\n\nSave your model name in the format:\nyour_user/your_model\n\nYou will need to enter this model name in HTTP Request nodes 3, 6, 8, and 9.\n\n2. Configure Google Nodes\nFor Google Sheets, Google Drive, and Google Gmail nodes: ➔ Set Credentials to your Google Account.\n\nIn Google Sheets:\n\nSelect the Document (your order tracking sheet).\n\nSelect the Sheet inside (specific tab).\n\nThe Google Sheet will store order information (order numbers, photo limits, payment status, etc.). (Example Sheet provided in files.)\n\n3. Configure HTTP Request nodes (Replicate)\nIn HTTP Request nodes 3, 6, 8, and 9:\n\nIn Headers ➔ Authorization:\nBearer <YOUR_REPLICATE_API_KEY>\n\nIn the Body (JSON) ➔ update:\n\"destination\": \"your_user/your_model\"\n➔ with your actual model name on Replicate.\n\nTip:\nYou can also adjust training parameters there (steps, learning_rate, etc.), and choose different aspect ratios for image generation.\n\n4. Configure HTTP Request 10 (Qdrant)\nSet the URL to your Qdrant Cloud cluster address.\n\nIn Headers ➔ Authorization ➔ api-key: <YOUR_QDRANT_API_KEY>.\n\nIn Qdrant Vector Store node:\n\nSet up a new Qdrant API Credential.\n\nIn OpenAI Embedding node:\n\nSet up a new OpenAI API Credential.\n\nCurrent Version: Draft\nLater updates to the workflow will include:\n\nA central configuration step to enter all keys and parameters once ➔ they will be reused automatically.",
+        "height": 1180,
+        "width": 1000
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2840,
+        -600
+      ],
+      "typeVersion": 1,
+      "id": "9838cfc5-f366-4921-a3ab-4a706a24e7ed",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Lora training",
+        "height": 500,
+        "width": 1760,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1060,
+        -940
+      ],
+      "typeVersion": 1,
+      "id": "9becfefa-3409-4dad-8165-f30bacff3847",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Oploading photos to disk",
+        "height": 500,
+        "width": 1200,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -160,
+        -940
+      ],
+      "typeVersion": 1,
+      "id": "0d336ffa-7152-4031-9af3-c8c6154116eb",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "downloading pdf file and creating data vector",
+        "height": 460,
+        "width": 1940,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        660,
+        -180
+      ],
+      "typeVersion": 1,
+      "id": "8174ab79-8182-438a-b34f-208171cfadcc",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "generating photos",
+        "height": 560,
+        "width": 1280,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2680,
+        -300
+      ],
+      "typeVersion": 1,
+      "id": "0c133a07-d557-4170-ae6f-670395fd3a12",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "verify orders",
+        "height": 520,
+        "width": 1540,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1800,
+        -220
+      ],
+      "typeVersion": 1,
+      "id": "7476443d-5800-4184-a177-7398cb2fa588",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compression": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Google Drive3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Google Drive2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail1": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request8": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request9": {
+      "main": [
+        [
+          {
+            "node": "Gmail3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail2": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive2": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets2": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Compression",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request6": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets4": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets3": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets5": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets6": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets7": {
+      "main": [
+        [
+          {
+            "node": "If5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets10": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If5": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code6": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_vectorStore": [
+        []
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets12": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request10": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Code6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets8": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail3": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2f52d430-c99d-4467-ba14-65c71f49559f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d18a3383d06f98351109440aa87765b991aa155f7c63bc67b12c56f1a07ed19b"
+  },
+  "id": "kpcKCwsyyaVIssIB",
+  "tags": []
+}
