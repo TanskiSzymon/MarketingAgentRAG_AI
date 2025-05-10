@@ -69,8 +69,8 @@ This project is a complete n8n workflow designed for automating LoRA model train
   - Once the model is trained, it appears in your Replicate account under "Models," and remains accessible for future generations without retraining.
 
 - **Performance and Costs:**
-  - **Training cost:** ~2 USD per model (based on Replicate pricing).
-  - **Image generation cost:** typically **below 0.10 USD** per image.
+  - **Training cost:** ~1 USD per model (based on Replicate pricing and number of photos).
+  - **Image generation cost:** typically **below 0.01 USD** per image.
   - The workflow is optimized to minimize token usage and API costs.
 
 - **Current Status:**
@@ -101,6 +101,3 @@ This project is a complete n8n workflow designed for automating LoRA model train
 - OpenAI account
 - Qdrant Cloud account (or private instance)
 
-
-
-MIT License
