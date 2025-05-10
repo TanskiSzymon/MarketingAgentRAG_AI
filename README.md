@@ -8,9 +8,9 @@ This project is a complete n8n workflow designed for automating LoRA model train
 
 ![example1](https://github.com/user-attachments/assets/e02e6712-bd02-45d7-ae4e-aaf42bc667d6)
 
-![image](https://github.com/user-attachments/assets/be86cab5-6981-49e2-8152-ba60f60ff86b)
-
 ![example2](https://github.com/user-attachments/assets/bb4f4dbf-8cdc-4ef2-b340-61685e940b59)
+
+![image](https://github.com/user-attachments/assets/be86cab5-6981-49e2-8152-ba60f60ff86b)
 
 *More results in Example1_output_image and Example2_output_image
 ---
@@ -28,6 +28,8 @@ This project is a complete n8n workflow designed for automating LoRA model train
 ## 📋 Project Details
 
 ![flow](https://github.com/user-attachments/assets/2ec69964-3f5f-444b-98da-baf27484e2a9)
+
+![Diagram](https://github.com/user-attachments/assets/d1d07422-4908-48a0-9065-10872431918a)
 
 - **Technology:** n8n
 - **Integrations:**
