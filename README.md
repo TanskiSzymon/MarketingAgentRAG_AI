@@ -1,10 +1,10 @@
-📦 Marketing Automation Workflow (n8n)
+Marketing Automation Workflow (n8n)
 
 This project is a complete n8n workflow designed for automating LoRA model training, product photo generation, and order management using Google Sheets, Drive, Gmail, Replicate, and Qdrant.
 
 ---
 
-## 📊 Results Preview
+##  Results Preview
 
 ![example1](https://github.com/user-attachments/assets/e02e6712-bd02-45d7-ae4e-aaf42bc667d6)
 
@@ -83,7 +83,7 @@ This project is a complete n8n workflow designed for automating LoRA model train
 
 ---
 
-## ⚙️ Setup Instructions
+## Setup Instructions
 
 1. Install and configure n8n.
 2. Create necessary Credentials (Google, Replicate, OpenAI, Qdrant).
@@ -94,7 +94,7 @@ This project is a complete n8n workflow designed for automating LoRA model train
 
 ---
 
-## 🛠️ Requirements
+## Requirements
 
 - Google Cloud account (for OAuth 2.0)
 - Replicate account
