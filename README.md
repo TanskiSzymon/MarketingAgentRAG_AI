@@ -15,7 +15,7 @@ This project is a complete n8n workflow designed for automating LoRA model train
 *More results in Example1_output_image and Example2_output_image
 ---
 
-## 🎬 Demo Video
+## Demo Video
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=lyQkkeuPuW0">
@@ -25,7 +25,7 @@ This project is a complete n8n workflow designed for automating LoRA model train
 
 ---
 
-## 📋 Project Details
+## Project Details
 
 
 ![Diagram](https://github.com/user-attachments/assets/d1d07422-4908-48a0-9065-10872431918a)
